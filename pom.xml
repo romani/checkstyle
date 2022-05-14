@@ -292,7 +292,7 @@
     <dependency>
       <groupId>com.github.caciocavallosilano</groupId>
       <artifactId>cacio-tta</artifactId>
-      <version>1.11</version>
+      <version>1.17</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
