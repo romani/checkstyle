@@ -26,6 +26,7 @@ import static com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck.MS
 
 import java.io.File;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.CommonToken;
 import org.junit.jupiter.api.Test;
@@ -785,6 +786,17 @@ public class ImportOrderCheckTest extends AbstractModuleTestSupport {
         verifyWithInlineConfigParser(
                 getPath("InputImportOrderTestTrimInOption.java"),
                 expected);
+    }
+
+    @Test
+    public void testPites() throws Exception {
+        Pattern[] patterns = new Pattern[3];
+        patterns[0] = Pattern.compile("java");
+        patterns[1] = Pattern.compile(".*.my");
+        patterns[2] = Pattern.compile(".*.mycom");
+        assertWithMessage("failed")
+                .that(ImportOrderCheck.getGroupNumber(patterns, "java.mycom."))
+                .isEqualTo(2);
     }
 
     /**

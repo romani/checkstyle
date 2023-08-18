@@ -1084,7 +1084,7 @@ public class ImportOrderCheck
      * @param name the import name to find.
      * @return group number for given import name.
      */
-    private static int getGroupNumber(Pattern[] patterns, String name) {
+    static int getGroupNumber(Pattern[] patterns, String name) {
         int bestIndex = patterns.length;
         int bestEnd = -1;
         int bestPos = Integer.MAX_VALUE;

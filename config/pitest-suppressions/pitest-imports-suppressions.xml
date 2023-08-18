@@ -36,24 +36,6 @@
     <lineContent>final boolean regex = containsRegexAttribute(attributes);</lineContent>
   </mutation>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   <mutation unstable="false">
     <sourceFile>ImportOrderCheck.java</sourceFile>
     <mutatedClass>com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck</mutatedClass>
@@ -98,5 +80,4 @@
     <description>Removed assignment to member variable regex</description>
     <lineContent>this.regex = false;</lineContent>
   </mutation>
-
 </suppressedMutations>
