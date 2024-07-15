@@ -19,7 +19,10 @@ concurrency:
 
 jobs:
   parse_comment:
-    if: startsWith(github.event.comment.body, 'Github, generate report for')
+    if: |
+      (startsWith(github.event.comment.body, 'Github, generate report for ') ||
+       startsWith(github.event.comment.body, 'GitHub, generate report for ')) &&
+      github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
       config_bundle_path: ${{ steps.parse.outputs.config_bundle_path }}
@@ -49,7 +52,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           CONFIG_BUNDLE_PATH=$(echo "$COMMENT_BODY" | \
-            grep -oP '(?<=Github, generate report for ).*')
+            sed -E 's/.*(Github|GitHub), generate report for //g')
           echo "CONFIG_BUNDLE_PATH=$CONFIG_BUNDLE_PATH"
           ./.ci/append-to-github-output.sh "config_bundle_path" "$CONFIG_BUNDLE_PATH"
 
