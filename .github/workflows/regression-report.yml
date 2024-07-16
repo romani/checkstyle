@@ -20,9 +20,9 @@ concurrency:
 jobs:
   parse_comment:
     if: |
+      github.event.issue.pull_request &&
       (startsWith(github.event.comment.body, 'Github, generate report for ') ||
-       startsWith(github.event.comment.body, 'GitHub, generate report for ')) &&
-      github.event.issue.pull_request
+       startsWith(github.event.comment.body, 'GitHub, generate report for '))
     runs-on: ubuntu-latest
     outputs:
       config_bundle_path: ${{ steps.parse.outputs.config_bundle_path }}
