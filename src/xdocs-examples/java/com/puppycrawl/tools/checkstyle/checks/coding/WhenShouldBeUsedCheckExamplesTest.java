@@ -17,23 +17,28 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.google.checkstyle.test.chapter4formatting.rule4822variabledistance;
+package com.puppycrawl.tools.checkstyle.checks.coding;
+
+import static com.puppycrawl.tools.checkstyle.checks.coding.WhenShouldBeUsedCheck.MSG_KEY;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.checkstyle.test.base.AbstractGoogleModuleTestSupport;
+import com.puppycrawl.tools.checkstyle.AbstractExamplesModuleTestSupport;
 
-public class DeclaredWhenNeededTest extends AbstractGoogleModuleTestSupport {
-
+public class WhenShouldBeUsedCheckExamplesTest
+    extends AbstractExamplesModuleTestSupport {
     @Override
     protected String getPackageLocation() {
-        return "com/google/checkstyle/test/chapter4formatting/rule4822variabledistance";
+        return "com/puppycrawl/tools/checkstyle/checks/coding/whenshouldbeused";
     }
 
     @Test
-    public void testArrayTypeStyle() throws Exception {
-        final String filePath = getPath("InputDeclaredWhenNeeded.java");
-        verifyWithConfigParser(new String[] {"VariableDeclarationUsageDistance"}, filePath);
-    }
+    public void testExample1() throws Exception {
+        final String[] expected = {
+            "18:7: " + getCheckMessage(MSG_KEY),
+        };
 
+        verifyWithInlineConfigParser(
+                getNonCompilablePath("Example1.java"), expected);
+    }
 }

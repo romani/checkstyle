@@ -794,6 +794,17 @@
           </tr>
           <tr>
             <td>
+              <a href="checks/coding/missingnullcaseinswitch.html#MissingNullCaseInSwitch">
+                MissingNullCaseInSwitch
+              </a>
+            </td>
+            <td>
+              Checks that a given switch statement or expression that use a reference type
+              in its selector expression has a <code>null</code> case label.
+            </td>
+          </tr>
+          <tr>
+            <td>
               <a href="checks/coding/missingswitchdefault.html#MissingSwitchDefault">
                 MissingSwitchDefault
               </a>
@@ -1382,6 +1393,17 @@
               </a>
             </td>
             <td>Checks the distance between declaration of variable and its first usage.</td>
+          </tr>
+          <tr>
+            <td>
+              <a href="checks/coding/whenshouldbeused.html#WhenShouldBeUsed">
+                WhenShouldBeUsed
+              </a>
+            </td>
+            <td>
+              Ensures that <code>when</code> is used instead of a single
+              <code>if</code> statement inside a case block.
+            </td>
           </tr>
           <tr>
             <td>

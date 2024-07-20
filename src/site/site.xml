@@ -136,6 +136,7 @@
           <item name="MagicNumber" href="checks/coding/magicnumber.html"/>
           <item name="MatchXpath" href="checks/coding/matchxpath.html"/>
           <item name="MissingCtor" href="checks/coding/missingctor.html"/>
+          <item name="MissingNullCaseInSwitch" href="checks/coding/missingnullcaseinswitch.html"/>
           <item name="MissingSwitchDefault" href="checks/coding/missingswitchdefault.html"/>
           <item name="ModifiedControlVariable" href="checks/coding/modifiedcontrolvariable.html"/>
           <item name="MultipleStringLiterals" href="checks/coding/multiplestringliterals.html"/>
@@ -173,6 +174,8 @@
           <item name="UnusedLocalVariable" href="checks/coding/unusedlocalvariable.html"/>
           <item name="VariableDeclarationUsageDistance"
                 href="checks/coding/variabledeclarationusagedistance.html"/>
+          <item name="WhenShouldBeUsed"
+                href="checks/coding/whenshouldbeused.html"/>
         </item>
         <item name="Headers" href="checks/header/index.html" collapse="true">
           <item name="Header" href="checks/header/header.html"/>
