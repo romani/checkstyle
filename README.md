@@ -1,6 +1,6 @@
 # ![](https://raw.githubusercontent.com/checkstyle/resources/master/img/checkstyle-logos/checkstyle-logo-260x99.png)
 
-Checkstyle is a tool for checking Java source code for adherence to a Code Standard
+Checkstyle is a tool for checking Java source code for adherence  to a Code Standard
 or set of validation rules (best practices).
 
 [![][travis img]][travis]
