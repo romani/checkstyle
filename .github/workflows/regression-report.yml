@@ -1,20 +1,7 @@
-#####################################################################################
-# GitHub Action to generate Checkstyle report.
-#
-# Workflow starts when:
-# 1) PR comment - created
-#
-# Requirements:
-# 1) secrets.AWS_ACCESS_KEY_ID - access key for AWS S3 service user
-# 2) secrets.AWS_SECRET_ACCESS_KEY - security access key for AWS S3 service user
-#
-# If you need to change bucket name or region, change AWS_REGION and AWS_BUCKET_NAME variables.
-# For another bucket, you will need to change the secrets.
-#####################################################################################
-name: regression-report
+name: Report-By-Comment
 env:
-  AWS_REGION: us-east-2
-  AWS_BUCKET_NAME: "checkstyle-diff-reports"
+  AWS_REGION: ap-south-1
+  AWS_BUCKET_NAME: "chesktyler-reports"
   USER_LOGIN: ${{ github.event.issue.user.login }}
 
 on:
@@ -23,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
   pull-requests: write
 
 concurrency:
@@ -131,9 +119,14 @@ jobs:
       message: ${{ steps.out.outputs.message }}
       download_files_failed: ${{ steps.download_files.outputs.failed }}
     steps:
-
       - name: Download checkstyle
         uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
 
       - name: Download files
         id: download_files
@@ -159,23 +152,63 @@ jobs:
           git remote add forked "$FORK_REPO_GIT_URL"
           git fetch forked
 
+      - name: Create necessary directories
+        run: |
+          mkdir -p reports
+          mkdir -p tmp_reports/upstream/master
+          
       - name: Setup local maven cache
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: checkstyle-maven-cache-${{ hashFiles('**/pom.xml') }}
 
-      - name: Download contribution
-        uses: actions/checkout@v4
-        with:
-          repository: checkstyle/contribution
-          path: .ci-temp/contribution
+      # - name: Download contribution
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: checkstyle/contribution
+      #     path: .ci-temp/contribution
+
+      # - name: Prepare environment
+      #   run: |
+      #     mv .ci-temp/project.properties ./.ci-temp/contribution/checkstyle-tester/
+      #     mv .ci-temp/*.xml ./.ci-temp/contribution/checkstyle-tester/
+      #     sudo apt install groovy
 
       - name: Prepare environment
         run: |
-          mv .ci-temp/project.properties ./.ci-temp/contribution/checkstyle-tester/
-          mv .ci-temp/*.xml ./.ci-temp/contribution/checkstyle-tester/
-          sudo apt install groovy
+          echo "Current working directory:"
+          pwd
+          
+          echo "Contents of current directory:"
+          ls -la
+          
+          echo "Contents of .ci-temp directory before any operations:"
+          ls -la .ci-temp/
+          
+          # Instead of moving, let's just check if files exist
+          if [ -f ".ci-temp/project.properties" ]; then
+            echo "project.properties exists in .ci-temp/"
+          else
+            echo "project.properties does not exist in .ci-temp/"
+          fi
+          
+          if ls .ci-temp/*.xml 1> /dev/null 2>&1; then
+            echo "XML files exist in .ci-temp/"
+          else
+            echo "No XML files found in .ci-temp/"
+          fi
+          
+          echo "Final contents of .ci-temp directory:"
+          ls -la .ci-temp/
+          
+          if [ -f ".ci-temp/project.properties" ]; then
+            echo "Contents of project.properties:"
+            cat .ci-temp/project.properties
+          else
+            echo "Cannot display contents of project.properties as it doesn't exist"
+          fi
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -184,29 +217,121 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Generate report
+      - name: Download DiffTool JAR
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: "relentless-pursuit/test-configs"
+          tag: "diff-tool-1.0.0"
+          fileName: "diff-java-tool.jar"
+
+      - name: Download patch-diff-report-tool JAR
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: "checkstyle/test-configs"
+          tag: "patch-diff-report-tool-0.1-SNAPSHOT"
+          fileName: "patch-diff-report-tool-0.1-SNAPSHOT-jar-with-dependencies.jar"
+
+      - name: Build Checkstyle and Generate Report
         env:
           BRANCH: ${{ needs.parse_comment.outputs.branch }}
         run: |
-          cd .ci-temp/contribution/checkstyle-tester
-          bash
+          # Build Checkstyle
+          cd $GITHUB_WORKSPACE
+
+          mvn -Dxml.skip=true \
+              -Dpmd.skip=true \
+              -Dspotbugs.skip=true \
+              -Djacoco.skip=true \
+              -DskipTests \
+              -Dcheckstyle.skip=true \
+              -Drat.skip=true \
+              -Dcheckstyle.excludes="**/nocodeinfile/**/*,**/src/it/**/*,**/resources-noncompilable/**/*,**/xdocs-examples/**/*,**/src/main/java/checkstyle/src/it/**/*,**/src/main/java/checkstyle/src/it/resources-noncompilable/**/*,**/src/test/resources-noncompilable/**/*,**/test/resources/**/*,**/*Input*.java,**/*TestInput*.java,**/inputs/**/*,**/input/**/*,**/Example*.java,**/Example*.xml,**/resources/**/*.properties,**/resources/**/*.xml,**/noncompilable/**/*,**/src/main/java/checkstyle/src/it/resources-noncompilable/com/google/checkstyle/test/**/*" \
+              -Dmaven.compiler.excludes="**/nocodeinfile/**/*,**/src/it/**/*,**/resources-noncompilable/**/*,**/xdocs-examples/**/*,**/src/main/java/checkstyle/src/it/**/*,**/src/main/java/checkstyle/src/it/resources-noncompilable/**/*,**/src/test/resources-noncompilable/**/*,**/test/resources/**/*,**/*Input*.java,**/*TestInput*.java,**/inputs/**/*,**/input/**/*,**/Example*.java,**/Example*.xml,**/resources/**/*.properties,**/resources/**/*.xml,**/noncompilable/**/*,**/src/main/java/checkstyle/src/it/resources-noncompilable/com/google/checkstyle/test/chapter3filestructure/**/*" \
+              -e \
+              --no-transfer-progress \
+              --batch-mode \
+              -Pno-validations \
+              clean install
+
+          # Generate report
           REF="forked/$BRANCH"
-          REPO="../../../../checkstyle"
+          REPO="$GITHUB_WORKSPACE"
           BASE_BRANCH="upstream/master"
-          export MAVEN_OPTS="-Xmx5g"
-          if [ -f new_module_config.xml ]; then
-            groovy diff.groovy -r "$REPO" -p "$REF" -pc new_module_config.xml -m single\
-              -l project.properties -xm "-Dcheckstyle.failsOnError=false"\
-              --allowExcludes
-          elif [ -f patch_config.xml ]; then
-            groovy diff.groovy -r "$REPO" -b "$BASE_BRANCH" -p "$REF" -bc diff_config.xml\
-              -pc patch_config.xml -l project.properties -xm "-Dcheckstyle.failsOnError=false"\
-              --allowExcludes
+          CONFIG_FILE="$GITHUB_WORKSPACE/.ci-temp/diff_config.xml"
+          PROJECTS_FILE="$GITHUB_WORKSPACE/.ci-temp/project.properties"
+          
+          java -jar diff-java-tool.jar \
+              --localGitRepo "$REPO" \
+              --baseBranch "$BASE_BRANCH" \
+              --patchBranch "forked/$BRANCH" \
+              --config "$CONFIG_FILE" \
+              --listOfProjects "$PROJECTS_FILE" \
+              --allowExcludes \
+              --mode "diff" \
+              --extraMvnRegressionOptions "-Dmaven.test.skip=true -Dcheckstyle.skip=true -Drat.skip=true -Dmaven.javadoc.skip=true -Dpmd.skip=true -Dcpd.skip=true -Dfindbugs.skip=true -Dcobertura.skip=true -Dmaven.site.skip=true -Dmaven.jxr.skip=true -Dplexus.skip=true -Dmaven.compiler.excludes=**/resources-noncompilable/**/*,**/it/**/* -Dcheckstyle.excludes=**/resources-noncompilable/**/*,**/it/**/*"                    
+                   
+          # Debug output
+          echo "Current directory structure:"
+          find . -type d
+          echo "Contents of target directory:"
+          ls -la target/
+          echo "Contents of reports directory:"
+          ls -la reports/
+          echo "Contents of tmp_reports directory:"
+          ls -la tmp_reports/
+
+      - name: Move Checkstyle report
+        run: |
+          if [ -f "target/checkstyle-result.xml" ]; then
+            mkdir -p tmp_reports/upstream/master
+            mv target/checkstyle-result.xml tmp_reports/upstream/master/
           else
-            groovy diff.groovy -r "$REPO" -b "$BASE_BRANCH" -p "$REF" -c diff_config.xml\
-              -l project.properties -xm "-Dcheckstyle.failsOnError=false"\
-              --allowExcludes
+            echo "checkstyle-result.xml not found in target directory"
+            exit 1
           fi
+
+      # - name: Generate report
+      #   env:
+      #     BRANCH: ${{ needs.parse_comment.outputs.branch }}
+      #   run: |
+      #     # Start from the repository root
+      #     cd $GITHUB_WORKSPACE
+          
+      #     # Ensure we have the latest branches
+      #     git fetch --all --prune
+          
+      #     # Set variables
+      #     REF="forked/$BRANCH"
+      #     REPO="$GITHUB_WORKSPACE"
+      #     BASE_BRANCH="upstream/master"
+          
+      #     # Verify the branch exists
+      #     if ! git rev-parse --verify "$REF" >/dev/null 2>&1; then
+      #       echo "Error: Branch $REF does not exist!"
+      #       git branch -a  # List all branches for debugging
+      #       exit 1
+      #     fi
+          
+      #     # Change to the checkstyle-tester directory
+      #     cd .ci-temp/contribution/checkstyle-tester
+          
+      #     # Set Maven options
+      #     export MAVEN_OPTS="-Xmx5g"
+          
+      #     # Run the appropriate Groovy command
+      #     if [ -f new_module_config.xml ]; then
+      #       groovy diff.groovy -r "$REPO" -p "$REF" -pc new_module_config.xml -m single \
+      #         -l project.properties -xm "-Dcheckstyle.failsOnError=false" \
+      #         --allowExcludes
+      #     elif [ -f patch_config.xml ]; then
+      #       groovy diff.groovy -r "$REPO" -b "$BASE_BRANCH" -p "$REF" -bc diff_config.xml \
+      #         -pc patch_config.xml -l project.properties -xm "-Dcheckstyle.failsOnError=false" \
+      #         --allowExcludes
+      #     else
+      #       groovy diff.groovy -r "$REPO" -b "$BASE_BRANCH" -p "$REF" -c diff_config.xml \
+      #         -l project.properties -xm "-Dcheckstyle.failsOnError=false" \
+      #         --allowExcludes
+      #     fi
 
       - name: Copy Report to AWS S3 Bucket
         run: |
@@ -226,12 +351,12 @@ jobs:
         run: |
           ./.ci/append-to-github-output.sh "message" "$(cat .ci-temp/message)"
 
-  add_sad_Emoji:
-    needs: [ check_pr_status, parse_comment, make_report ]
+  add_sad_emoji:
+    needs: [check_pr_status, parse_comment, make_report]
     if: cancelled()
     runs-on: ubuntu-latest
     steps:
-      - name: Add sad Emoji
+      - name: Add sad emoji
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -292,3 +417,4 @@ jobs:
         with:
           message: ${{steps.out.outputs.message}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
