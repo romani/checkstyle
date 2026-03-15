@@ -17,7 +17,7 @@ jobs:
         default: 15m
     docker:
       - image: << parameters.image-name >>
-    resource_class: medium+
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
